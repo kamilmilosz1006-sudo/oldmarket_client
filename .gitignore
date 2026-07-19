@@ -4,3 +4,9 @@ app/build/
 local.properties
 *.iml
 .idea/
+bin/
+gen/
+*.apk
+*.apk.1
+*.class
+Thumbs.db
