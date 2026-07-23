@@ -19,7 +19,7 @@ public class Prefs {
     }
 
     public static String getServer(Context c) {
-        return sp(c).getString("server", "ilyamarket.site");
+        return sp(c).getString("server", "http://ilyamarket.site");
     }
 
     public static void setServer(Context c, String host) {

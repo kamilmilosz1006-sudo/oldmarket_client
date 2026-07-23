@@ -10,7 +10,7 @@ public class Api {
 	    if (host == null) host = "";
 	    host = host.trim();
 
-	    if (host.length() == 0) host = "http://ilyamarket.nport.link/";
+        if (host.length() == 0) host = "http://ilyamarket.site/";
 
 	    // ������ ��������� �����
 	    while (host.endsWith("/")) host = host.substring(0, host.length() - 1);
