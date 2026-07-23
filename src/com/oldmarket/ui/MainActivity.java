@@ -19,6 +19,7 @@ import com.oldmarket.util.ThemeUtil;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
