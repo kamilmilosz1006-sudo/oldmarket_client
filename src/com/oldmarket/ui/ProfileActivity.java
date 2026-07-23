@@ -257,7 +257,6 @@ public class ProfileActivity extends Activity {
         final String minAndroid = edtSubMinAndroid.getText().toString().trim();
         final String desc = edtSubDesc.getText().toString().trim();
         if (apkPath == null) { msg("Select APK file"); return; }
-
         if (iconPath == null) { msg("Select icon"); return; }
 
         final ProgressDialog pd = new ProgressDialog(this);
@@ -279,52 +278,10 @@ public class ProfileActivity extends Activity {
                     if (minAndroid.length() > 0) fields.put("min_android", minAndroid);
 
                     java.util.Map<String, String> files = new java.util.HashMap<String, String>();
-                    files.put("apk", apkPath);
-                    files.put("icon", iconPath);
-                    if (screenshotsPath != null) files.put("screenshots[]", screenshotsPath);
-
-                    String path = null;
-                    if (apkPath != null && apkPath.startsWith("content://")) {
-                        android.database.Cursor c = null;
-                        try {
-                            c = getContentResolver().query(android.net.Uri.parse(apkPath),
-                                    new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null);
-                            if (c != null && c.moveToFirst()) {
-                                String displayName = c.getString(0);
-                                java.io.File tempDir = getCacheDir();
-                                java.io.File tempFile = new java.io.File(tempDir, displayName);
-                                java.io.InputStream is = getContentResolver().openInputStream(android.net.Uri.parse(apkPath));
-                                java.io.OutputStream os = new java.io.FileOutputStream(tempFile);
-                                byte[] buf = new byte[8192];
-                                int r;
-                                while ((r = is.read(buf)) != -1) os.write(buf, 0, r);
-                                is.close();
-                                os.close();
-                                path = tempFile.getAbsolutePath();
-                                files.put("apk", path);
-                            }
-                        } finally { if (c != null) c.close(); }
-                    }
-
-                    if (iconPath != null && iconPath.startsWith("content://")) {
-                        android.database.Cursor c = null;
-                        try {
-                            c = getContentResolver().query(android.net.Uri.parse(iconPath),
-                                    new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null);
-                            if (c != null && c.moveToFirst()) {
-                                String displayName = c.getString(0);
-                                java.io.File tempDir = getCacheDir();
-                                java.io.File tempFile = new java.io.File(tempDir, displayName);
-                                java.io.InputStream is = getContentResolver().openInputStream(android.net.Uri.parse(iconPath));
-                                java.io.OutputStream os = new java.io.FileOutputStream(tempFile);
-                                byte[] buf = new byte[8192];
-                                int r;
-                                while ((r = is.read(buf)) != -1) os.write(buf, 0, r);
-                                is.close();
-                                os.close();
-                                files.put("icon", tempFile.getAbsolutePath());
-                            }
-                        } finally { if (c != null) c.close(); }
+                    files.put("apk", copyContentToCache(apkPath));
+                    files.put("icon", copyContentToCache(iconPath));
+                    if (screenshotsPath != null) {
+                        files.put("screenshots[]", copyContentToCache(screenshotsPath));
                     }
 
                     return Http.postMultipart(Api.submitUrl(ProfileActivity.this), fields, files, ProfileActivity.this);
@@ -364,6 +321,37 @@ public class ProfileActivity extends Activity {
                 }
             }
         }.execute();
+    }
+
+    // copy content:// URI to cache dir and return real file path
+    private String copyContentToCache(String uriString) {
+        if (uriString == null) return null;
+        try {
+            android.net.Uri uri = android.net.Uri.parse(uriString);
+            if (!"content".equals(uri.getScheme())) return uriString;
+            android.database.Cursor c = null;
+            try {
+                c = getContentResolver().query(uri,
+                        new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null);
+                String displayName = "upload_" + System.currentTimeMillis();
+                if (c != null && c.moveToFirst()) {
+                    String dn = c.getString(0);
+                    if (dn != null && dn.length() > 0) displayName = dn;
+                }
+                java.io.File tempFile = new java.io.File(getCacheDir(), displayName);
+                java.io.InputStream is = getContentResolver().openInputStream(uri);
+                if (is == null) return uriString;
+                java.io.OutputStream os = new java.io.FileOutputStream(tempFile);
+                byte[] buf = new byte[8192];
+                int r;
+                while ((r = is.read(buf)) != -1) os.write(buf, 0, r);
+                is.close();
+                os.close();
+                return tempFile.getAbsolutePath();
+            } finally { if (c != null) c.close(); }
+        } catch (Exception e) {
+            return uriString;
+        }
     }
 
     private void loadSubmissions() {
