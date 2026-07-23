@@ -26,6 +26,14 @@
             android:paddingTop="4dp"
             android:textSize="12sp"/>
 
+        <TextView
+            android:id="@+id/txtPoints"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Points: 0"
+            android:textSize="12sp"
+            android:paddingTop="2dp"/>
+
         <ImageView
             android:id="@+id/imgAvatar"
             android:layout_width="90dp"
@@ -61,5 +69,120 @@
             android:layout_height="wrap_content"
             android:text="Logout"
             android:layout_marginTop="8dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#cccccc"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/submit_app"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"/>
+
+        <EditText
+            android:id="@+id/edtSubName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/app_name_hint"
+            android:layout_marginTop="4dp"/>
+
+        <EditText
+            android:id="@+id/edtSubAuthor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/author_hint"
+            android:layout_marginTop="4dp"/>
+
+        <EditText
+            android:id="@+id/edtSubVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/version_hint"
+            android:layout_marginTop="4dp"/>
+
+        <EditText
+            android:id="@+id/edtSubCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/category_hint"
+            android:layout_marginTop="4dp"/>
+
+        <EditText
+            android:id="@+id/edtSubMinAndroid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/min_android_hint"
+            android:layout_marginTop="4dp"
+            android:inputType="number"/>
+
+        <EditText
+            android:id="@+id/edtSubDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Description"
+            android:layout_marginTop="4dp"
+            android:minLines="3"/>
+
+        <TextView
+            android:id="@+id/txtApkPath"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/select_apk"
+            android:padding="8dp"
+            android:layout_marginTop="4dp"
+            android:background="#eeeeee"/>
+
+        <TextView
+            android:id="@+id/txtIconPath"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/select_icon"
+            android:padding="8dp"
+            android:layout_marginTop="4dp"
+            android:background="#eeeeee"/>
+
+        <TextView
+            android:id="@+id/txtScreenshotsPath"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/select_screenshots"
+            android:padding="8dp"
+            android:layout_marginTop="4dp"
+            android:background="#eeeeee"/>
+
+        <Button
+            android:id="@+id/btnSubmit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/submit_app"
+            android:layout_marginTop="12dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#cccccc"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/submissions"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:id="@+id/layoutSubmissions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp"/>
     </LinearLayout>
 </ScrollView>

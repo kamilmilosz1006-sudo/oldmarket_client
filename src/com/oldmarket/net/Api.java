@@ -111,4 +111,26 @@ public class Api {
     public static String clientAnalyticsUrl(Context c) {
         return baseUrl(c) + "/api/client/analytics";
     }
+
+    // ---- SUBMISSIONS ----
+    public static String submitUrl(Context c) {
+        return baseUrl(c) + "/api/submit";
+    }
+
+    public static String userSubmissionsUrl(Context c, int userId) {
+        return baseUrl(c) + "/api/user/" + userId + "/submissions";
+    }
+
+    // ---- MESSAGES ----
+    public static String messagesUrl(Context c, int userId) {
+        return baseUrl(c) + "/api/user/" + userId + "/messages";
+    }
+
+    public static String unreadCountUrl(Context c, int userId) {
+        return baseUrl(c) + "/api/user/" + userId + "/messages/unread-count";
+    }
+
+    public static String markReadUrl(Context c, int userId, int msgId) {
+        return baseUrl(c) + "/api/user/" + userId + "/messages/read/" + msgId;
+    }
 }

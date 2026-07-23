@@ -19,7 +19,7 @@ public class Prefs {
     }
 
     public static String getServer(Context c) {
-        return sp(c).getString("server", "94.156.115.120");
+        return sp(c).getString("server", "ilyamarket.site");
     }
 
     public static void setServer(Context c, String host) {
@@ -202,6 +202,22 @@ public class Prefs {
 
     public static void setDarkTheme(Context c, boolean v) {
         sp(c).edit().putBoolean("dark_theme", v).commit();
+    }
+
+    public static int getUnreadCount(Context c) {
+        return sp(c).getInt("unread_count", 0);
+    }
+
+    public static void setUnreadCount(Context c, int v) {
+        sp(c).edit().putInt("unread_count", v).commit();
+    }
+
+    public static long getLastUnreadCheckAt(Context c) {
+        return sp(c).getLong("last_unread_check_at", 0L);
+    }
+
+    public static void setLastUnreadCheckAt(Context c, long v) {
+        sp(c).edit().putLong("last_unread_check_at", v).commit();
     }
 
     public static long getLastClientUpdateCheckAt(Context c) {

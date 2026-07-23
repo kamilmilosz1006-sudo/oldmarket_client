@@ -21,6 +21,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -57,7 +58,7 @@ public class MainActivity extends Activity {
     private AppListAdapter adapter;
     private ArrayList<AppItem> items = new ArrayList<AppItem>();
 
-    private ImageButton btnSearch;
+    private ImageButton btnSearch, btnMail;
     private Button btnApps, btnGames, btnDownloads;
     private TextView txtSection, txtMarket, txtPromoType, txtBrowseCategory;
     private View loadingOverlay, promoMainRoot;
@@ -92,6 +93,7 @@ public class MainActivity extends Activity {
         btnGames = (Button) findViewById(R.id.btnGames);
         btnDownloads = (Button) findViewById(R.id.btnDownloads);
         btnSearch = (ImageButton) findViewById(R.id.btnSearch);
+        btnMail = (ImageButton) findViewById(R.id.btnMail);
         txtMarket = (TextView) findViewById(R.id.txtMarket);
 
         View header = getLayoutInflater().inflate(R.layout.main_list_header, list, false);
@@ -129,6 +131,9 @@ public class MainActivity extends Activity {
 
         btnSearch.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(MainActivity.this, SearchActivity.class)); }
+        });
+        btnMail.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { showMessagesDialog(); }
         });
         btnApps.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { openCategories(false); }
@@ -189,6 +194,7 @@ public class MainActivity extends Activity {
         super.onResume();
         adapter.refreshInstalledPackages();
         adapter.notifyDataSetChanged();
+        checkUnreadCount();
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -224,6 +230,135 @@ public class MainActivity extends Activity {
     }
 
     private void openDownloads() { startActivity(new Intent(this, DownloadsActivity.class)); }
+
+    private void checkUnreadCount() {
+        if (!Prefs.isLoggedIn(this)) {
+            updateMailBadge(0);
+            return;
+        }
+        final int uid = Prefs.getUserId(this);
+        long lastCheck = Prefs.getLastUnreadCheckAt(this);
+        long now = System.currentTimeMillis();
+        if (now - lastCheck < 30000L) {
+            updateMailBadge(Prefs.getUnreadCount(this));
+            return;
+        }
+        Prefs.setLastUnreadCheckAt(this, now);
+        new AsyncTask<Void, Void, Integer>() {
+            protected Integer doInBackground(Void... v) {
+                try {
+                    String s = Http.getString(Api.unreadCountUrl(MainActivity.this, uid));
+                    if (s == null) return 0;
+                    JSONObject o = new JSONObject(s);
+                    return o.optInt("count", 0);
+                } catch (Exception e) { return 0; }
+            }
+            protected void onPostExecute(Integer count) {
+                if (count == null) count = 0;
+                Prefs.setUnreadCount(MainActivity.this, count);
+                updateMailBadge(count);
+            }
+        }.execute();
+    }
+
+    private void updateMailBadge(int count) {
+        try {
+            if (count > 0) {
+                btnMail.setImageResource(android.R.drawable.ic_dialog_alert);
+                btnMail.setAlpha(1.0f);
+            } else {
+                btnMail.setImageResource(R.drawable.ic_menu_downloads);
+            }
+        } catch (Exception e) { }
+    }
+
+    private void showMessagesDialog() {
+        if (!Prefs.isLoggedIn(this)) {
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
+        }
+        final int uid = Prefs.getUserId(this);
+        final ProgressDialog pd = new ProgressDialog(this);
+        pd.setMessage(getString(R.string.loading));
+        pd.setCancelable(false);
+        pd.show();
+        new AsyncTask<Void, Void, String>() {
+            protected String doInBackground(Void... v) {
+                try {
+                    return Http.getString(Api.messagesUrl(MainActivity.this, uid));
+                } catch (Exception e) { return null; }
+            }
+            protected void onPostExecute(String s) {
+                try { pd.dismiss(); } catch (Exception e) {}
+                if (s == null) {
+                    Toast.makeText(MainActivity.this, R.string.error_network, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                try {
+                    JSONArray arr = new JSONArray(s);
+                    if (arr.length() == 0) {
+                        Toast.makeText(MainActivity.this, R.string.no_messages, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String[] titles = new String[arr.length()];
+                    final int[] msgIds = new int[arr.length()];
+                    final boolean[] isRead = new boolean[arr.length()];
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject o = arr.getJSONObject(i);
+                        msgIds[i] = o.optInt("id", 0);
+                        String subject = o.optString("subject", "");
+                        String text = o.optString("text", "");
+                        String created = o.optString("created_at", "");
+                        boolean read = o.optBoolean("is_read", false);
+                        isRead[i] = read;
+                        titles[i] = (read ? "" : "[NEW] ") + subject + " (" + created + ")";
+                    }
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle(getString(R.string.messages))
+                            .setItems(titles, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    showMessageDetail(msgIds[which], isRead[which], uid);
+                                }
+                            })
+                            .setPositiveButton("OK", null)
+                            .show();
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "Failed to load messages", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }.execute();
+    }
+
+    private void showMessageDetail(final int msgId, final boolean wasRead, final int uid) {
+        new AsyncTask<Void, Void, String>() {
+            protected String doInBackground(Void... v) {
+                try {
+                    if (!wasRead) {
+                        Http.postJson(Api.markReadUrl(MainActivity.this, uid, msgId), "{}");
+                    }
+                    String s = Http.getString(Api.messagesUrl(MainActivity.this, uid));
+                    if (s == null) return null;
+                    JSONArray arr = new JSONArray(s);
+                    for (int i = 0; i < arr.length(); i++) {
+                        JSONObject o = arr.getJSONObject(i);
+                        if (o.optInt("id", 0) == msgId) {
+                            return o.optString("subject", "") + "\n\n" + o.optString("text", "");
+                        }
+                    }
+                    return null;
+                } catch (Exception e) { return null; }
+            }
+            protected void onPostExecute(String detail) {
+                if (detail == null) return;
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Message")
+                        .setMessage(detail)
+                        .setPositiveButton("OK", null)
+                        .show();
+                checkUnreadCount();
+            }
+        }.execute();
+    }
 
     private boolean restoreFromCache() {
         if (CACHE_ITEMS == null || CACHE_ITEMS.isEmpty()) return false;

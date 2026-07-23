@@ -79,4 +79,18 @@
     <string name="update_now">Update</string>
     <string name="later">Later</string>
     <string name="client_update_note_prefix">What is new: </string>
+    <string name="submit_app">Submit app</string>
+    <string name="submissions">My submissions</string>
+    <string name="app_name_hint">App name</string>
+    <string name="author_hint">Author</string>
+    <string name="version_hint">Version</string>
+    <string name="category_hint">Category code (e.g. utilities)</string>
+    <string name="min_android_hint">Min Android API (e.g. 14)</string>
+    <string name="select_apk">Select APK</string>
+    <string name="select_icon">Select icon</string>
+    <string name="select_screenshots">Select screenshots</string>
+    <string name="submitting">Submitting…</string>
+    <string name="submit_ok">App submitted for review!</string>
+    <string name="messages">Messages</string>
+    <string name="no_messages">No messages</string>
 </resources>

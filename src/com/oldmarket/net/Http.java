@@ -187,4 +187,97 @@ public class Http {
             try { if (conn != null) conn.disconnect(); } catch (Exception e) {}
         }
     }
+
+    // multipart/form-data POST for file uploads
+    public static String postMultipart(String urlStr, java.util.Map<String, String> fields,
+                                        java.util.Map<String, String> fileFields,
+                                        android.content.Context c) throws Exception {
+        String boundary = "----Boundary" + System.currentTimeMillis();
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+
+        // text fields
+        if (fields != null) {
+            for (java.util.Map.Entry<String, String> e : fields.entrySet()) {
+                String k = e.getKey();
+                String v = e.getValue();
+                if (v == null) v = "";
+                bos.write(("--" + boundary + "\r\n").getBytes("UTF-8"));
+                bos.write(("Content-Disposition: form-data; name=\"" + k + "\"\r\n").getBytes("UTF-8"));
+                bos.write("Content-Type: text/plain; charset=UTF-8\r\n\r\n".getBytes("UTF-8"));
+                bos.write(v.getBytes("UTF-8"));
+                bos.write("\r\n".getBytes("UTF-8"));
+            }
+        }
+
+        // file fields
+        if (fileFields != null) {
+            for (java.util.Map.Entry<String, String> e : fileFields.entrySet()) {
+                String fieldName = e.getKey();
+                String filePath = e.getValue();
+                if (filePath == null || filePath.length() == 0) continue;
+                java.io.File file = new java.io.File(filePath);
+                if (!file.exists()) continue;
+                String fileName = file.getName();
+                String contentType = "application/octet-stream";
+                String lower = fileName.toLowerCase();
+                if (lower.endsWith(".png")) contentType = "image/png";
+                else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) contentType = "image/jpeg";
+                else if (lower.endsWith(".apk")) contentType = "application/vnd.android.package-archive";
+
+                bos.write(("--" + boundary + "\r\n").getBytes("UTF-8"));
+                bos.write(("Content-Disposition: form-data; name=\"" + fieldName + "\"; filename=\"" + fileName + "\"\r\n").getBytes("UTF-8"));
+                bos.write(("Content-Type: " + contentType + "\r\n\r\n").getBytes("UTF-8"));
+
+                java.io.FileInputStream fis = new java.io.FileInputStream(file);
+                byte[] buf = new byte[8192];
+                int r;
+                while ((r = fis.read(buf)) != -1) bos.write(buf, 0, r);
+                fis.close();
+                bos.write("\r\n".getBytes("UTF-8"));
+            }
+        }
+
+        // closing boundary
+        bos.write(("--" + boundary + "--\r\n").getBytes("UTF-8"));
+        byte[] bodyBytes = bos.toByteArray();
+
+        java.net.HttpURLConnection conn = null;
+        java.io.OutputStream out = null;
+        java.io.InputStream in = null;
+        try {
+            java.net.URL url = new java.net.URL(urlStr);
+            conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(30000);
+            conn.setReadTimeout(60000);
+            conn.setUseCaches(false);
+            conn.setDoOutput(true);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+            conn.setRequestProperty("Content-Length", String.valueOf(bodyBytes.length));
+            if (c != null) {
+                String token = com.oldmarket.util.Prefs.getAuthToken(c);
+                if (token != null && token.length() > 0) {
+                    conn.setRequestProperty("X-Oldmarket-Auth", token);
+                }
+            }
+
+            out = conn.getOutputStream();
+            out.write(bodyBytes);
+            out.flush();
+
+            int code = conn.getResponseCode();
+            in = (code >= 200 && code < 300) ? conn.getInputStream() : conn.getErrorStream();
+            if (in == null) return null;
+
+            java.io.ByteArrayOutputStream res = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int r;
+            while ((r = in.read(buf)) != -1) res.write(buf, 0, r);
+            return new String(res.toByteArray(), "UTF-8");
+        } finally {
+            try { if (out != null) out.close(); } catch (Exception e) {}
+            try { if (in != null) in.close(); } catch (Exception e) {}
+            try { if (conn != null) conn.disconnect(); } catch (Exception e) {}
+        }
+    }
 }
